@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { userRoutes } from "./routes/users";
+import { userRoutes } from "./routes/users-routes";
 
 const port = Number(process.env.PORT) || 3000;
 
