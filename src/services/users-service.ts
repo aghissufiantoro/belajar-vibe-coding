@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { users } from "../db/schema";
+import { users, sessions } from "../db/schema";
 
 export const registerUser = async (
   name: string,
@@ -28,4 +28,40 @@ export const registerUser = async (
     email,
     password: hashedPassword,
   });
+};
+
+export const getCurrentUser = async (token: string) => {
+  // 1. Cari session berdasarkan token
+  const sessionResult = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.token, token))
+    .limit(1);
+
+  const [session] = sessionResult;
+
+  if (!session) {
+    throw new Error("unauthorized");
+  }
+
+  // 2. Cari user berdasarkan userId dari session
+  const userResult = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+
+  const [user] = userResult;
+
+  if (!user) {
+    throw new Error("unauthorized");
+  }
+
+  // 3. Kembalikan data user (tanpa password)
+  return user;
 };
