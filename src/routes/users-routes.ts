@@ -1,7 +1,41 @@
 import { Elysia, t } from "elysia";
-import { registerUser } from "../services/users-service";
+import { registerUser, getCurrentUser } from "../services/users-service";
 
 export const userRoutes = new Elysia({ prefix: "/api/users" })
+  .get(
+    "/current",
+    async ({ headers, set }) => {
+      try {
+        // 1. Ambil token dari header Authorization
+        const authorization = headers["authorization"];
+
+        if (!authorization) {
+          set.status = 401;
+          return { error: "unauthorized" };
+        }
+
+        // 2. Parse token dari format "Bearer<token>" atau "Bearer <token>"
+        const token = authorization.replace(/^Bearer\s*/i, "");
+
+        if (!token) {
+          set.status = 401;
+          return { error: "unauthorized" };
+        }
+
+        // 3. Panggil service untuk mendapatkan data user
+        const user = await getCurrentUser(token);
+
+        return {
+          data: user,
+        };
+      } catch (error: any) {
+        set.status = 401;
+        return {
+          error: "unauthorized",
+        };
+      }
+    }
+  )
   .post(
     "/",
     async ({ body, set }) => {
